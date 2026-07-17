@@ -1,25 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Button, FlatList } from 'react-native';
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 export default function App() {
   // 1. Estado para guardar la lista de eventos arrancando como arreglo vacio
   const [historial, setHistorial] = useState([]);
 
+  useEffect(() => {
+    // Apuntamos a una colección llamada "eventosCompartidos" ordenando por fecha descendente
+    const q = query(collection(db, "eventosCompartidos"), orderBy("timestamp", "desc"));
+
+    // onSnapshot se queda "escuchando". Si otro usuario agrega un evento, tu pantalla se actualiza sola al toque
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const eventos = [];
+      querySnapshot.forEach((doc) => {
+        eventos.push({ id: doc.id, ...doc.data() });
+      });
+      setHistorial(eventos);
+    });
+
+    // Desconectamos el escuchador cuando la app se cierra
+    return () => unsubscribe();
+  }, []);
+
   // Funcion que se ejecuta al presionar el boton
-  const registrarEvento = () => {
+  const registrarEvento = async () => {
     const ahora = new Date();
 
     // Formateamos la fecha y hora para que quede legible (DD/MM/AAAA HH:MM:SS)
     const fechaHoraFormateada = ahora.toLocaleString('es-AR');
 
-    // Creamos el nuevo evento con un ID único basado en el tiempo
-    const nuevoEvento = {
-      id: ahora.getTime().toString(),
-      fecha: fechaHoraFormateada,
-    };
-
-    // Agregamos el nuevo evento al principio del arreglo para mantener el orden descendente
-    setHistorial([nuevoEvento, ...historial]);
+    try {
+      await addDoc(collection(db, "eventosCompartidos"), {
+        fecha: fechaHoraFormateada,
+        timestamp: ahora.getTime() // Lo usamos para ordenar bien
+      });
+    } catch (e) {
+      console.error("Error al guardar en la nube: ", e);
+    }
   };
 
   return (
@@ -27,7 +63,7 @@ export default function App() {
       <Text style={styles.titulo}>Registrador de Eventos</Text>
       
       <View style={styles.botonCointainer}>
-        <Button title="Registrar Evento" onPress={registrarEvento} color="#3498db"/>
+        <Button title="Registrar Evento" onPress={registrarEvento} color="#e67e22"/>
       </View>
 
       <Text style={styles.subtitulo}>Historial:</Text>
@@ -39,7 +75,7 @@ export default function App() {
         renderItem={({ item, index }) => (
           <View style={styles.tarjetaEvento}>
             <Text style={styles.textoEvento}>
-              Evento #{historial.length - index}: {item.fecha}
+              Evento: {item.fecha}
             </Text>
           </View>
         )}

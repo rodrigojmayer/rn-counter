@@ -2,15 +2,16 @@
   "name": "rm-counter-app",
   "version": "1.0.0",
   "main": "index.js",
- "scripts": {
+  "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web"
   },
-"dependencies": {
+  "dependencies": {
     "expo": "~54.0.0",
     "expo-status-bar": "~2.1.0",
+    "firebase": "^12.16.0",
     "react": "19.0.0",
     "react-native": "0.78.0"
   },
