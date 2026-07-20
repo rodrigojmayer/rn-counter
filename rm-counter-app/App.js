@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Button, FlatList, TouchableOpacity, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Button, FlatList, TouchableOpacity, TextInput, Modal } from 'react-native';
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
@@ -26,6 +26,7 @@ export default function App() {
   const [tiposEvento, setTiposEvento] = useState([]); // Ahora viene de la base de datos
   const [tipoSeleccionado, setTipoSeleccionado] = useState('');
   const [nuevoTipoTexto, setNuevoTipoTexto] = useState(''); // Estado para el input
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     // Escuchar Historial de Eventos
@@ -113,29 +114,60 @@ export default function App() {
         <TouchableOpacity style={styles.botonAgregar} onPress={crearNuevoTipo}>
           <Text style={styles.botonAgregarTexto}>+</Text>
         </TouchableOpacity>
-      </View>
+        </View>
 
-      {/* SECCIÓN B: SELECCIONAR CATEGORÍA */}
+      {/* LISTA DESPLEGABLE (SELECTOR) */}
       <Text style={styles.seccionEtiqueta}>Seleccionar tipo:</Text>
-      <View style={styles.selectorContainer}>
-        {tiposEvento.map((item) => {
-          const esActivo = item.nombre === tipoSeleccionado;
-          return (
+      <TouchableOpacity 
+        style={styles.desplegableBoton} 
+        onPress={() => setModalVisible(true)}
+      >
+        <Text style={styles.desplegableTexto}>
+          {tipoSeleccionado || "Elegir un tipo de evento..."}
+        </Text>
+        <Text style={styles.flecha}>▼</Text>
+      </TouchableOpacity>
+      
+      {/* MODAL DESPLEGABLE */}
+        <Modal
+          visible={modalVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setModalVisible(false)}
+          >
             <TouchableOpacity
-              key={item.id}
-              style={[styles.chip, esActivo && styles.chipActivo]}
-              onPress={() => setTipoSeleccionado(item.nombre)}
-            >
-              <Text style={[styles.chipTexto, esActivo && styles.chipTextoActivo]}>
-                {item.nombre}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-        {tiposEvento.length === 0 && (
-          <Text style={styles.textoAyuda}>Creá tu primer tipo de evento arriba 👆</Text>
-        )}
-      </View>
+              style={styles.modalOcultarFondo}
+              activeOpacity={1}
+              onPress={() => setModalVisible(false)}
+              >
+                <View style={styles.modalContenido}>
+                  <Text style={styles.modalTitulo}>Selecciona un tipo</Text>
+                  <FlatList
+                    data={tiposEvento}
+                    keyExtractor={(item) => item.id}
+                    renderItem={({ item }) => (
+                      <TouchableOpacity
+                        style={[
+                          styles.opcionItem, 
+                          item.nombre === tipoSeleccionado && styles.opcionSeleccionada
+                        ]}
+                        onPress={() => {
+                          setTipoSeleccionado(item.nombre);
+                          setModalVisible(false);
+                        }}
+                      >
+                        <Text style={[
+                          styles.opcionTexto,
+                          item.nombre === tipoSeleccionado && styles.opcionTextoSeleccionada
+                        ]}>
+                          {item.nombre}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+              </TouchableOpacity>
+          </Modal>
 
       {/* SECCIÓN C: BOTÓN DE REGISTRO */}
       <View style={styles.botonContainer}>
@@ -254,6 +286,22 @@ const styles = StyleSheet.create({
     fontSize: 14 
 
   },
+  desplegableBoton: {
+    backgroundColor: '#ffffff', paddingHorizontal: 15, paddingVertical: 12, borderRadius: 8,
+    borderWidth: 1, borderColor: '#dcdde1', flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 20
+  },
+  desplegableTexto: { fontSize: 16, color: '#2c3e50', fontWeight: '600' },
+  flecha: { fontSize: 12, color: '#7f8c8d' },
+
+  // Estilos del Modal
+  modalOcultarFondo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContenido: { backgroundColor: '#fff', width: '100%', maxHeight: '50%', borderRadius: 12, padding: 20, elevation: 5 },
+  modalTitulo: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#2c3e50', textAlign: 'center' },
+  opcionItem: { paddingVertical: 14, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: '#f1f2f6' },
+  opcionSeleccionada: { backgroundColor: '#e8f8f5', borderRadius: 6 },
+  opcionTexto: { fontSize: 16, color: '#2c3e50' },
+  opcionTextoSeleccionada: { fontWeight: 'bold', color: '#2ecc71' },
   botonContainer: { 
     marginBottom: 25 
   },
