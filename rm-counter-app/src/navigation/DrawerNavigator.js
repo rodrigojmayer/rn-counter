@@ -5,7 +5,7 @@ import {
   DrawerContentScrollView,
   DrawerItemList
 } from '@react-navigation/drawer';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import RegistrarEventoScreen from '../screens/RegistrarEventoScreen';
 import HistorialCompletoScreen from '../screens/HistorialCompletoScreen';
@@ -48,7 +48,7 @@ export default function DrawerNavigator() {
         drawerActiveBackgroundColor: 'rgba(255, 255, 255, 0.15)',
         drawerActiveTintColor: '#ffffff',
         drawerInactiveTintColor: '#a0aec0',
-        drawerLabelStyle: { fontSize: 15, fontWeight: '500', marginLeft: -10 }
+        drawerLabelStyle: { fontSize: 15, fontWeight: '500', marginLeft: 5 }
       }}
     >
       <Drawer.Screen
@@ -85,6 +85,18 @@ export default function DrawerNavigator() {
       />
 
       {/* Pantallas futuras en desarrollo */}
+
+      <Drawer.Screen
+        name="Estadisticas"
+        component={EnConstruccionScreen}
+        initialParams={{ titulo: 'Estadísticas y Reportes' }}
+        options={{
+          title: 'Estadísticas',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="stats-chart-outline" size={size} color={color} />
+          )
+        }}
+      />
       <Drawer.Screen
         name="Perfil"
         component={EnConstruccionScreen}
@@ -120,15 +132,26 @@ export default function DrawerNavigator() {
           )
         }}
       />
-
       <Drawer.Screen
-        name="Estadisticas"
+        name="Contactanos"
         component={EnConstruccionScreen}
-        initialParams={{ titulo: 'Estadísticas y Reportes' }}
+        initialParams={{ titulo: 'Contáctanos' }}
         options={{
-          title: 'Estadísticas',
+          title: 'Contáctanos',
           drawerIcon: ({ color, size }) => (
-            <Ionicons name="stats-chart-outline" size={size} color={color} />
+            // <Ionicons color={color} name="service" size={size}/>
+            <MaterialCommunityIcons name="headset" size={size} color={color} />
+          )
+        }}
+      />
+      <Drawer.Screen
+        name="CerrarSesion"
+        component={EnConstruccionScreen}
+        initialParams={{ titulo: 'Cerrar Sesión' }}
+        options={{
+          title: 'Cerrar Sesión',
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="log-out-outline" size={size} color={color} />
           )
         }}
       />
