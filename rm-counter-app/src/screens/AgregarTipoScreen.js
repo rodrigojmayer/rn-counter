@@ -28,18 +28,18 @@ export default function AgregarTipoScreen({ navigation }) {
       navigation.navigate('Registrar');
     } catch (e) {
       console.error(e);
-      Alert.alert('Error', 'No se pudo guardar el tipo de evento');
+      Alert.alert('Error', 'No se pudo guardar el nuevo evento');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.titulo}>Nuevo Tipo de Evento</Text>
+      <Text style={styles.titulo}>Nuevo Evento</Text>
       
       <Text style={styles.seccionEtiqueta}>Nombre del evento / acción:</Text>
       <TextInput
         style={styles.input}
-        placeholder="Ej: Gotas, Pañal, Teta, Creadi..."
+        placeholder="Ej: Tarea"
         value={nuevoTipoTexto}
         onChangeText={setNuevoTipoTexto}
       />
