@@ -148,7 +148,8 @@ const styles = StyleSheet.create({
     container: { 
         flex: 1, 
         backgroundColor: '#f5f6fa', 
-        padding: 20 
+        padding: 20, 
+        paddingBottom: 50 
     },
     titulo: { 
         fontSize: 22, 
