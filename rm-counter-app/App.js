@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Button, FlatList, TouchableOpacity, TextInput, Modal } from 'react-native';
+import { StyleSheet, Text, View, Button, FlatList, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -48,9 +48,14 @@ export default function App() {
       });
       setTiposEvento(tipos);
       
-      // Si hay tipos y no hay ninguno seleccionado, agarramos el primero por defecto
-      if (tipos.length > 0 && !tipoSeleccionado) {
-        setTipoSeleccionado(tipos[0].nombre);
+      // Si el tipo actualmente seleccionado fue eliminado, resetear al primero de la lista
+      if (tipos.length > 0) {
+        const existe = tipos.some(t => t.nombre === tipoSeleccionado);
+        if (!existe) {
+          setTipoSeleccionado(tipos[0].nombre);
+        }
+      } else {
+        setTipoSeleccionado('');
       }
     });
 
@@ -73,6 +78,28 @@ export default function App() {
     } catch (e) {
       console.error("Error al crear el tipo de evento: ", e);
     }
+  };
+
+  // Función para eliminar un tipo de evento de Firestore
+  const eliminarTipo = (id, nombre) => {
+    Alert.alert(
+      "Eliminar tipo",
+      `¿Estás seguro de que querés eliminar "${nombre}"?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Eliminar", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteDoc(doc(db, "tiposEventos", id));
+            } catch (e) {
+              console.error("Error al eliminar el tipo: ", e);
+            }
+          }
+        }
+      ]
+    );
   };
 
   // 3. Registrar un evento en el historial
@@ -146,11 +173,13 @@ export default function App() {
                     data={tiposEvento}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
+                      <View style={[
+                        styles.opcionFila, 
+                        item.nombre === tipoSeleccionado && styles.opcionSeleccionada
+                      ]}>
+                        {/* Tocar el nombre selecciona el tipo */}
                       <TouchableOpacity
-                        style={[
-                          styles.opcionItem, 
-                          item.nombre === tipoSeleccionado && styles.opcionSeleccionada
-                        ]}
+                        style={styles.opcionTextoArea}
                         onPress={() => {
                           setTipoSeleccionado(item.nombre);
                           setModalVisible(false);
@@ -163,10 +192,21 @@ export default function App() {
                           {item.nombre}
                         </Text>
                       </TouchableOpacity>
-                    )}
-                  />
-                </View>
-              </TouchableOpacity>
+                      {/* Botón para eliminar el tipo */}
+                      <TouchableOpacity 
+                        style={styles.botonEliminar} 
+                        onPress={() => eliminarTipo(item.id, item.nombre)}
+                      >
+                        <Text style={styles.textoEliminar}>🗑️</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                  ListEmptyComponent={
+                    <Text style={styles.textoVacioModal}>No hay tipos de eventos cargados.</Text>
+                  }
+                />
+              </View>
+            </TouchableOpacity>
           </Modal>
 
       {/* SECCIÓN C: BOTÓN DE REGISTRO */}
@@ -253,39 +293,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold' 
   },
 
-  selectorContainer: { 
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
-    gap: 8, 
-    marginBottom: 20 
-  },
-  chip: { 
-    backgroundColor: '#ffffff', 
-    paddingVertical: 8, 
-    paddingHorizontal: 14, 
-    borderRadius: 20, 
-    borderWidth: 1, 
-    borderColor: '#dcdde1' 
-  },
-  chipActivo: { 
-    backgroundColor: '#2ecc71', 
-    borderColor: '#2ecc71' 
-  },
-  chipTexto: { 
-    color: '#2c3e50', 
-    fontWeight: '600', 
-    fontSize: 14 
-  },
-  chipTextoActivo: { 
-    color: '#ffffff' 
-
-  },
-  textoAyuda: { 
-    color: '#95a5a6', 
-    fontStyle: 'italic', 
-    fontSize: 14 
-
-  },
   desplegableBoton: {
     backgroundColor: '#ffffff', paddingHorizontal: 15, paddingVertical: 12, borderRadius: 8,
     borderWidth: 1, borderColor: '#dcdde1', flexDirection: 'row', justifyContent: 'space-between',
@@ -298,10 +305,19 @@ const styles = StyleSheet.create({
   modalOcultarFondo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
   modalContenido: { backgroundColor: '#fff', width: '100%', maxHeight: '50%', borderRadius: 12, padding: 20, elevation: 5 },
   modalTitulo: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#2c3e50', textAlign: 'center' },
-  opcionItem: { paddingVertical: 14, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: '#f1f2f6' },
+  opcionFila: { 
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
+    borderBottomWidth: 1, borderBottomColor: '#f1f2f6', paddingVertical: 8 
+  },
   opcionSeleccionada: { backgroundColor: '#e8f8f5', borderRadius: 6 },
+  opcionTextoArea: { flex: 1, paddingVertical: 8, paddingHorizontal: 8 },
   opcionTexto: { fontSize: 16, color: '#2c3e50' },
   opcionTextoSeleccionada: { fontWeight: 'bold', color: '#2ecc71' },
+  
+  botonEliminar: { padding: 8 },
+  textoEliminar: { fontSize: 16 },
+  textoVacioModal: { textAlign: 'center', color: '#95a5a6', marginVertical: 15, fontStyle: 'italic' },
+  
   botonContainer: { 
     marginBottom: 25 
   },
