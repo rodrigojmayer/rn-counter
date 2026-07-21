@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Button, FlatList, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, doc, deleteDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, doc, deleteDoc, updateDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -26,7 +26,14 @@ export default function App() {
   const [tiposEvento, setTiposEvento] = useState([]); // Ahora viene de la base de datos
   const [tipoSeleccionado, setTipoSeleccionado] = useState('');
   const [nuevoTipoTexto, setNuevoTipoTexto] = useState(''); // Estado para el input
-  const [modalVisible, setModalVisible] = useState(false);
+  // Modales
+  const [modalTiposVisible, setModalTiposVisible] = useState(false);
+  const [modalEditarVisible, setModalEditarVisible] = useState(false);
+  
+  // Estado para la edición de un evento
+  const [eventoAEditar, setEventoAEditar] = useState(null);
+  const [editTipo, setEditTipo] = useState('');
+  const [editFecha, setEditFecha] = useState('');
 
   useEffect(() => {
     // Escuchar Historial de Eventos
@@ -125,6 +132,51 @@ export default function App() {
     }
   };
 
+  // ELIMINAR EVENTO DEL HISTORIAL
+  const eliminarEvento = (id) => {
+    Alert.alert(
+      "Eliminar registro",
+      "¿Querés borrar este evento del historial?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Borrar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteDoc(doc(db, "eventosCompartidos", id));
+            } catch (e) {
+              console.error("Error al borrar evento: ", e);
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  // ABRIR MODAL PARA EDITAR EVENTO
+  const abrirEdicionEvento = (item) => {
+    setEventoAEditar(item);
+    setEditTipo(item.tipo || '');
+    setEditFecha(item.fecha || '');
+    setModalEditarVisible(true);
+  };
+
+  // GUARDAR EDICIÓN DE EVENTO
+  const guardarEdicionEvento = async () => {
+    if (!eventoAEditar) return;
+    try {
+      await updateDoc(doc(db, "eventosCompartidos", eventoAEditar.id), {
+        tipo: editTipo,
+        fecha: editFecha
+      });
+      setModalEditarVisible(false);
+      setEventoAEditar(null);
+    } catch (e) {
+      console.error("Error al actualizar evento: ", e);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.titulo}>Registrador de Eventos</Text>
@@ -134,7 +186,7 @@ export default function App() {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Ej: Gotas Vitaminas, Pañal, Cuna..."
+          placeholder="Ej: Gotas Vitaminas, Pañal..."
           value={nuevoTipoTexto}
           onChangeText={setNuevoTipoTexto}
         />
@@ -147,7 +199,7 @@ export default function App() {
       <Text style={styles.seccionEtiqueta}>Seleccionar tipo:</Text>
       <TouchableOpacity 
         style={styles.desplegableBoton} 
-        onPress={() => setModalVisible(true)}
+        onPress={() => setModalTiposVisible(true)}
       >
         <Text style={styles.desplegableTexto}>
           {tipoSeleccionado || "Elegir un tipo de evento..."}
@@ -155,20 +207,20 @@ export default function App() {
         <Text style={styles.flecha}>▼</Text>
       </TouchableOpacity>
       
-      {/* MODAL DESPLEGABLE */}
+      {/* MODAL GESTIÓN DE TIPOS DE EVENTO */}
         <Modal
-          visible={modalVisible}
+          visible={modalTiposVisible}
           transparent={true}
           animationType="fade"
-          onRequestClose={() => setModalVisible(false)}
+          onRequestClose={() => setModalTiposVisible(false)}
           >
             <TouchableOpacity
               style={styles.modalOcultarFondo}
               activeOpacity={1}
-              onPress={() => setModalVisible(false)}
+              onPress={() => setModalTiposVisible(false)}
               >
                 <View style={styles.modalContenido}>
-                  <Text style={styles.modalTitulo}>Selecciona un tipo</Text>
+                  <Text style={styles.modalTitulo}>Selecciona o elimina un tipo</Text>
                   <FlatList
                     data={tiposEvento}
                     keyExtractor={(item) => item.id}
@@ -182,7 +234,7 @@ export default function App() {
                         style={styles.opcionTextoArea}
                         onPress={() => {
                           setTipoSeleccionado(item.nombre);
-                          setModalVisible(false);
+                          setModalTiposVisible(false);
                         }}
                       >
                         <Text style={[
@@ -194,10 +246,10 @@ export default function App() {
                       </TouchableOpacity>
                       {/* Botón para eliminar el tipo */}
                       <TouchableOpacity 
-                        style={styles.botonEliminar} 
+                        style={styles.iconBoton} 
                         onPress={() => eliminarTipo(item.id, item.nombre)}
                       >
-                        <Text style={styles.textoEliminar}>🗑️</Text>
+                        <Text>🗑️</Text>
                       </TouchableOpacity>
                     </View>
                   )}
@@ -227,8 +279,20 @@ export default function App() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.tarjetaEvento}>
+            <View style={styles.tarjetaInfo}>
             <Text style={styles.textoTipo}>{item.tipo || '📌 Evento'}</Text>
             <Text style={styles.textoFecha}>{item.fecha}</Text>
+          </View>
+
+          {/* Botones Acciones para el Registro */}
+            <View style={styles.accionesFila}>
+              <TouchableOpacity style={styles.iconBoton} onPress={() => abrirEdicionEvento(item)}>
+                <Text style={styles.iconTexto}>✏️</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.iconBoton} onPress={() => eliminarEvento(item.id)}>
+                <Text style={styles.iconTexto}>🗑️</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
         ListEmptyComponent={
@@ -236,6 +300,49 @@ export default function App() {
         }
         style={styles.lista}
       />
+      
+      {/* MODAL EDITAR EVENTO DEL HISTORIAL */}
+      <Modal
+        visible={modalEditarVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setModalEditarVisible(false)}
+      >
+        <View style={styles.modalOcultarFondo}>
+          <View style={styles.modalContenido}>
+            <Text style={styles.modalTitulo}>Editar Registro</Text>
+            
+            <Text style={styles.inputEtiqueta}>Tipo de evento:</Text>
+            <TextInput
+              style={styles.inputModal}
+              value={editTipo}
+              onChangeText={setEditTipo}
+            />
+
+            <Text style={styles.inputEtiqueta}>Fecha / Hora:</Text>
+            <TextInput
+              style={styles.inputModal}
+              value={editFecha}
+              onChangeText={setEditFecha}
+            />
+
+            <View style={styles.modalBotonesFila}>
+              <TouchableOpacity 
+                style={[styles.modalBoton, styles.modalBotonCancelar]} 
+                onPress={() => setModalEditarVisible(false)}
+              >
+                <Text style={styles.modalBotonTexto}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.modalBoton, styles.modalBotonGuardar]} 
+                onPress={guardarEdicionEvento}
+              >
+                <Text style={styles.modalBotonTexto}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -250,7 +357,6 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
     color: '#2c3e50',
     textAlign: 'center',
     marginBottom: 15,
@@ -294,29 +400,81 @@ const styles = StyleSheet.create({
   },
 
   desplegableBoton: {
-    backgroundColor: '#ffffff', paddingHorizontal: 15, paddingVertical: 12, borderRadius: 8,
-    borderWidth: 1, borderColor: '#dcdde1', flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 20
+    backgroundColor: '#ffffff', 
+    paddingHorizontal: 15, 
+    paddingVertical: 12, 
+    borderRadius: 8,
+    borderWidth: 1, 
+    borderColor: '#dcdde1', 
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
+    alignItems: 'center', 
+    marginBottom: 20
   },
-  desplegableTexto: { fontSize: 16, color: '#2c3e50', fontWeight: '600' },
-  flecha: { fontSize: 12, color: '#7f8c8d' },
+  desplegableTexto: { 
+    fontSize: 16, 
+    color: '#2c3e50', 
+    fontWeight: '600' 
+  },
+  flecha: { 
+    fontSize: 12, 
+    color: '#7f8c8d' 
+  },
 
   // Estilos del Modal
-  modalOcultarFondo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modalContenido: { backgroundColor: '#fff', width: '100%', maxHeight: '50%', borderRadius: 12, padding: 20, elevation: 5 },
-  modalTitulo: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, color: '#2c3e50', textAlign: 'center' },
-  opcionFila: { 
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', 
-    borderBottomWidth: 1, borderBottomColor: '#f1f2f6', paddingVertical: 8 
+  modalOcultarFondo: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.5)', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    padding: 20 
   },
-  opcionSeleccionada: { backgroundColor: '#e8f8f5', borderRadius: 6 },
-  opcionTextoArea: { flex: 1, paddingVertical: 8, paddingHorizontal: 8 },
-  opcionTexto: { fontSize: 16, color: '#2c3e50' },
-  opcionTextoSeleccionada: { fontWeight: 'bold', color: '#2ecc71' },
-  
-  botonEliminar: { padding: 8 },
-  textoEliminar: { fontSize: 16 },
-  textoVacioModal: { textAlign: 'center', color: '#95a5a6', marginVertical: 15, fontStyle: 'italic' },
+  modalContenido: { 
+    backgroundColor: '#fff', 
+    width: '100%', 
+    maxHeight: '60%', 
+    borderRadius: 12, 
+    padding: 20, 
+    elevation: 5 
+  },
+  modalTitulo: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    marginBottom: 15, 
+    color: '#2c3e50', 
+    textAlign: 'center' 
+  },
+  opcionFila: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#f1f2f6', 
+    paddingVertical: 8 
+  },
+  opcionSeleccionada: { 
+    backgroundColor: '#e8f8f5', 
+    borderRadius: 6 
+  },
+  opcionTextoArea: { 
+    flex: 1, 
+    paddingVertical: 8, 
+    paddingHorizontal: 8 
+  },
+  opcionTexto: { 
+    fontSize: 16, 
+    color: '#2c3e50' 
+  },
+  opcionTextoSeleccionada: { 
+    fontWeight: 'bold', 
+    color: '#2ecc71' 
+  },
+  textoVacioModal: { 
+    textAlign: 'center', 
+    color: '#95a5a6', 
+    marginVertical: 15, 
+    fontStyle: 'italic' 
+  },
   
   botonContainer: { 
     marginBottom: 25 
@@ -327,7 +485,10 @@ const styles = StyleSheet.create({
     color: '#2c3e50', 
     marginBottom: 12 
   },
-  lista: { flex: 1 },
+  lista: { 
+    flex: 1 
+  },
+
   tarjetaEvento: {
     backgroundColor: '#ffffff', 
     padding: 14, 
@@ -338,6 +499,9 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     elevation: 1
   },
+  tarjetaInfo: {
+    flex: 1
+  },
   textoTipo: { 
     fontSize: 15, 
     fontWeight: 'bold', 
@@ -345,7 +509,18 @@ const styles = StyleSheet.create({
   },
   textoFecha: { 
     fontSize: 13, 
-    color: '#7f8c8d' 
+    color: '#7f8c8d',
+    marginTop: 2
+  },
+  accionesFila: {
+    flexDirection: 'row',
+    gap: 10
+  },
+  iconBoton: {
+    padding: 6
+  },
+  iconTexto: {
+    fontSize: 16
   },
   textoVacio: { 
     textAlign: 'center', 
@@ -354,4 +529,44 @@ const styles = StyleSheet.create({
     fontSize: 15, 
     fontStyle: 'italic' 
   },
+  // Formulario Modal Editar
+  inputEtiqueta: {
+    fontSize: 13,
+    fontWeight: 'bold',
+    color: '#7f8c8d',
+    marginTop: 10,
+    marginBottom: 5
+  },
+  inputModal: {
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#dcdde1',
+    fontSize: 15
+  },
+  modalBotonesFila: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+    gap: 10
+  },
+  modalBoton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center'
+  },
+  modalBotonCancelar: {
+    backgroundColor: '#95a5a6'
+  },
+  modalBotonGuardar: {
+    backgroundColor: '#2ecc71'
+  },
+  modalBotonTexto: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15
+  }
 });
