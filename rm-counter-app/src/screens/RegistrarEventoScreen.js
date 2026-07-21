@@ -22,7 +22,6 @@ import { db } from '../config/firebase';
 export default function RegistrarEventoScreen({ navigation }) {
   const [tiposEvento, setTiposEvento] = useState([]);
   const [tipoSeleccionado, setTipoSeleccionado] = useState('');
-  const [nuevoTipoTexto, setNuevoTipoTexto] = useState('');
   const [ultimosEventos, setUltimosEventos] = useState([]);
   const [modalTiposVisible, setModalTiposVisible] = useState(false);
 
@@ -39,7 +38,7 @@ export default function RegistrarEventoScreen({ navigation }) {
     const qUltimos = query(
       collection(db, 'eventosCompartidos'),
       orderBy('timestamp', 'desc'),
-      limit(3)
+      limit(7)
     );
     const unsubscribeUltimos = onSnapshot(qUltimos, (snapshot) => {
       const eventos = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -51,17 +50,6 @@ export default function RegistrarEventoScreen({ navigation }) {
       unsubscribeUltimos();
     };
   }, []);
-
-  const crearNuevoTipo = async () => {
-    if (!nuevoTipoTexto.trim()) return;
-    try {
-      await addDoc(collection(db, 'tiposEventos'), { nombre: nuevoTipoTexto.trim() });
-      setTipoSeleccionado(nuevoTipoTexto.trim());
-      setNuevoTipoTexto('');
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const registrarEvento = async () => {
     if (!tipoSeleccionado) return;
@@ -87,19 +75,6 @@ export default function RegistrarEventoScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Text style={styles.titulo}>Nuevo Registro</Text>
-
-      <Text style={styles.seccionEtiqueta}>Añadir tipo de evento:</Text>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Ej: Gotas, Pañal..."
-          value={nuevoTipoTexto}
-          onChangeText={setNuevoTipoTexto}
-        />
-        <TouchableOpacity style={styles.botonAgregar} onPress={crearNuevoTipo}>
-          <Text style={styles.botonAgregarTexto}>+</Text>
-        </TouchableOpacity>
-      </View>
 
       <Text style={styles.seccionEtiqueta}>Seleccionar tipo:</Text>
       <TouchableOpacity
@@ -161,6 +136,17 @@ export default function RegistrarEventoScreen({ navigation }) {
                 </TouchableOpacity>
               )}
             />
+
+            {/* Opción dentro del modal para ir a crear un tipo nuevo */}
+            <TouchableOpacity
+              style={styles.botonCrearNuevo}
+              onPress={() => {
+                setModalTiposVisible(false);
+                navigation.navigate('AgregarTipo');
+              }}
+            >
+              <Text style={styles.botonCrearNuevoTexto}>+ Crear nuevo tipo</Text>
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -185,32 +171,6 @@ const styles = StyleSheet.create({
         fontWeight: '700', 
         color: '#7f8c8d', 
         marginBottom: 6 
-    },
-    inputContainer: { 
-        flexDirection: 'row', 
-        marginBottom: 15, 
-        gap: 10 
-    },
-    input: { 
-        flex: 1, 
-        backgroundColor: '#fff', 
-        paddingHorizontal: 12, 
-        borderRadius: 8, 
-        borderWidth: 1, 
-        borderColor: '#dcdde1' 
-    },
-    botonAgregar: { 
-        backgroundColor: '#3498db', 
-        width: 44, 
-        height: 44, 
-        borderRadius: 8, 
-        justifyContent: 'center', 
-        alignItems: 'center' 
-    },
-    botonAgregarTexto: { 
-        color: '#fff', 
-        fontSize: 22, 
-        fontWeight: 'bold' 
     },
     desplegableBoton: { 
         backgroundColor: '#fff', 
@@ -285,5 +245,15 @@ const styles = StyleSheet.create({
     opcionTexto: { 
         fontSize: 15, 
         color: '#2c3e50' 
+    },
+    botonCrearNuevo: { 
+        marginTop: 15, 
+        paddingTop: 10, 
+        alignItems: 'center' 
+    },
+    botonCrearNuevoTexto: { 
+        color: '#3498db', 
+        fontWeight: 'bold', 
+        fontSize: 15 
     }
 });

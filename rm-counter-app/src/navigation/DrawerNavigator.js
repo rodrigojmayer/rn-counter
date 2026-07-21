@@ -2,6 +2,7 @@ import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import RegistrarEventoScreen from '../screens/RegistrarEventoScreen';
 import HistorialCompletoScreen from '../screens/HistorialCompletoScreen';
+import AgregarTipoScreen from '../screens/AgregarTipoScreen';
 
 const Drawer = createDrawerNavigator();
 
@@ -22,6 +23,11 @@ export default function DrawerNavigator() {
         name="Registrar"
         component={RegistrarEventoScreen}
         options={{ title: 'Registrar Evento' }}
+      />
+      <Drawer.Screen
+        name="AgregarTipo"
+        component={AgregarTipoScreen}
+        options={{ title: 'Añadir Tipo de Evento' }}
       />
       <Drawer.Screen
         name="HistorialCompleto"
