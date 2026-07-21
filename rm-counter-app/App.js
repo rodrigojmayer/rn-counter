@@ -47,7 +47,10 @@ export default function App() {
     });
 
     // Escuchar Tipos de Eventos Creados (ordenados alfabéticamente)
-    const qTipos = query(collection(db, "tiposEventos"), orderBy("nombre", "asc"));
+    const qTipos = query(
+      collection(db, "tiposEventos"), 
+      orderBy("nombre", "asc")
+    );
     const unsubscribeTipos = onSnapshot(qTipos, (querySnapshot) => {
       const tipos = [];
       querySnapshot.forEach((doc) => {
@@ -112,7 +115,6 @@ export default function App() {
   // 3. Registrar un evento en el historial
   const registrarEvento = async () => {
     if (!tipoSeleccionado) return;
-
     const ahora = new Date();
     const fechaHoraFormateada = ahora.toLocaleString('es-AR', {
       day: '2-digit',
@@ -208,58 +210,60 @@ export default function App() {
       </TouchableOpacity>
       
       {/* MODAL GESTIÓN DE TIPOS DE EVENTO */}
-        <Modal
-          visible={modalTiposVisible}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setModalTiposVisible(false)}
+      <Modal
+        visible={modalTiposVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setModalTiposVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOcultarFondo}
+          activeOpacity={1}
+          onPress={() => setModalTiposVisible(false)}
           >
-            <TouchableOpacity
-              style={styles.modalOcultarFondo}
-              activeOpacity={1}
-              onPress={() => setModalTiposVisible(false)}
-              >
-                <View style={styles.modalContenido}>
-                  <Text style={styles.modalTitulo}>Selecciona o elimina un tipo</Text>
-                  <FlatList
-                    data={tiposEvento}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                      <View style={[
-                        styles.opcionFila, 
-                        item.nombre === tipoSeleccionado && styles.opcionSeleccionada
-                      ]}>
-                        {/* Tocar el nombre selecciona el tipo */}
-                      <TouchableOpacity
-                        style={styles.opcionTextoArea}
-                        onPress={() => {
-                          setTipoSeleccionado(item.nombre);
-                          setModalTiposVisible(false);
-                        }}
-                      >
-                        <Text style={[
-                          styles.opcionTexto,
-                          item.nombre === tipoSeleccionado && styles.opcionTextoSeleccionada
-                        ]}>
-                          {item.nombre}
-                        </Text>
-                      </TouchableOpacity>
-                      {/* Botón para eliminar el tipo */}
-                      <TouchableOpacity 
-                        style={styles.iconBoton} 
-                        onPress={() => eliminarTipo(item.id, item.nombre)}
-                      >
-                        <Text>🗑️</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                  ListEmptyComponent={
-                    <Text style={styles.textoVacioModal}>No hay tipos de eventos cargados.</Text>
-                  }
-                />
-              </View>
-            </TouchableOpacity>
-          </Modal>
+            <View style={styles.modalContenido}>
+              <Text style={styles.modalTitulo}>Selecciona o elimina un tipo</Text>
+              <FlatList
+                data={tiposEvento}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                  <View style={[
+                    styles.opcionFila, 
+                    item.nombre === tipoSeleccionado && styles.opcionSeleccionada
+                  ]}>
+                    {/* Tocar el nombre selecciona el tipo */}
+                  <TouchableOpacity
+                    style={styles.opcionTextoArea}
+                    onPress={() => {
+                      setTipoSeleccionado(item.nombre);
+                      setModalTiposVisible(false);
+                    }}
+                  >
+                    <Text style={[
+                      styles.opcionTexto,
+                      item.nombre === tipoSeleccionado && styles.opcionTextoSeleccionada
+                    ]}>
+                      {item.nombre}
+                    </Text>
+                  </TouchableOpacity>
+                  {/* Botón para eliminar el tipo */}
+                  <TouchableOpacity 
+                    style={styles.iconBoton} 
+                    onPress={() => eliminarTipo(item.id, item.nombre)}
+                  >
+                    <Text>🗑️</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              ListEmptyComponent={
+                <Text style={styles.textoVacioModal}>
+                  No hay tipos de eventos cargados.
+                </Text>
+              }
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* SECCIÓN C: BOTÓN DE REGISTRO */}
       <View style={styles.botonContainer}>
@@ -313,11 +317,40 @@ export default function App() {
             <Text style={styles.modalTitulo}>Editar Registro</Text>
             
             <Text style={styles.inputEtiqueta}>Tipo de evento:</Text>
-            <TextInput
-              style={styles.inputModal}
-              value={editTipo}
-              onChangeText={setEditTipo}
-            />
+            <View style={styles.listaTiposEdicionContainer}>
+              <FlatList
+                data={tiposEvento}
+                keyExtractor={(item) => item.id}
+                style={{ maxHeight: 150 }}
+                renderItem={({ item }) => {
+                  const esSeleccionado = item.nombre === editTipo;
+                  return (
+                    <TouchableOpacity
+                      style={[
+                        styles.opcionFilaEdicion,
+                        esSeleccionado && styles.opcionEdicionSeleccionada
+                      ]}
+                      onPress={() => setEditTipo(item.nombre)}
+                    >
+                      <Text
+                        style={[
+                          styles.opcionTexto,
+                          esSeleccionado && styles.opcionTextoSeleccionada
+                        ]}
+                      >
+                        {item.nombre}
+                      </Text>
+                      {esSeleccionado && <Text style={styles.tilde}>✓</Text>}
+                    </TouchableOpacity>
+                  );
+                }}
+                ListEmptyComponent={
+                  <Text style={styles.textoVacioModal}>
+                    No hay tipos creados disponibles.
+                  </Text>
+                }
+              />
+            </View>
 
             <Text style={styles.inputEtiqueta}>Fecha / Hora:</Text>
             <TextInput
@@ -352,6 +385,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f6fa',
     paddingTop: 50,
+    paddingBottom: 50,
     paddingHorizontal: 20,
   },
   titulo: {
@@ -545,6 +579,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#dcdde1',
     fontSize: 15
+  },
+  listaTiposEdicionContainer: {
+    borderWidth: 1,
+    borderColor: '#dcdde1',
+    borderRadius: 6,
+    backgroundColor: '#f8f9fa'
+  },
+  opcionFilaEdicion: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f2f6'
+  },
+  opcionEdicionSeleccionada: {
+    backgroundColor: '#e8f8f5'
+  },
+  tilde: {
+    color: '#2ecc71',
+    fontWeight: 'bold',
+    fontSize: 16
   },
   modalBotonesFila: {
     flexDirection: 'row',
