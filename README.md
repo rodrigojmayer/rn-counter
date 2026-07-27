@@ -1,3 +1,17 @@
+
+#  DSW - POC React Native / Flutter
+
+## Integrantes:
+
+Gonzalez Eduardo 25912
+Mayer Rodrigo 36640
+
+#  Presentación
+
+https://drive.google.com/drive/folders/1kTxLW_MG3BvGq7L1WTlkOvoYWd4zdEOd?usp=sharing
+
+---
+
 #  React Native Demo Counter App
 
 Aplicación móvil y web para la gestión y seguimiento de contadores, desarrollada con **React Native** y el ecosistema **Expo**.
