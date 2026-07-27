@@ -1,10 +1,10 @@
-# 📱 RM Counter App
+#  React Native Demo Counter App
 
 Aplicación móvil y web para la gestión y seguimiento de contadores, desarrollada con **React Native** y el ecosistema **Expo**.
 
 ---
 
-## 🚀 Tecnologías Utilizadas
+##  Tecnologías Utilizadas
 
 * **Framework Principal:** [React Native](https://reactnative.dev/) (SDK 54) con [Expo](https://expo.dev/)
 * **Lenguaje:** JavaScript / JSX
@@ -14,7 +14,7 @@ Aplicación móvil y web para la gestión y seguimiento de contadores, desarroll
 
 ---
 
-## 🛠️ Requisitos Previos
+##  Requisitos Previos
 
 Asegurate de tener instalado en tu entorno de desarrollo:
 
@@ -25,7 +25,7 @@ Asegurate de tener instalado en tu entorno de desarrollo:
 
 ---
 
-## 📦 Instalación Local
+##  Instalación Local
 
 1. **Clonar el repositorio:**
    ```bash
@@ -45,7 +45,7 @@ EXPO_PUBLIC_FIREBASE_PROJECT_ID=tu_project_id
 EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=tu_storage_bucket
 EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=tu_sender_id
 EXPO_PUBLIC_FIREBASE_APP_ID=tu_app_id
-💻 Desarrollo
+ Desarrollo
 Ejecutar en desarrollo móvil (Expo Go):
 
 Bash
@@ -58,8 +58,8 @@ Bash
 npx expo start --web
 Accedé desde tu celular o PC usando la IP local que muestra la terminal.
 
-🏗️ Compilación y Despliegue (EAS Build)
-🤖 Generar APK ejecutable para Android
+ Compilación y Despliegue (EAS Build)
+ Generar APK ejecutable para Android
 Para generar un instalador .apk independiente que no requiera Expo Go:
 
 Iniciar sesión en EAS:
@@ -76,11 +76,11 @@ Una vez finalizado el proceso en Expo, descargá el .apk directo al teléfono o 
 
 Habilitá la opción de "Instalar aplicaciones de fuentes desconocidas" en Android e instalalo.
 
-💡 Nota: Si necesitás limpiar el caché de compilación en la nube antes de generar la build, usá la bandera --clear-cache:
+ Nota: Si necesitás limpiar el caché de compilación en la nube antes de generar la build, usá la bandera --clear-cache:
 
 Bash
 eas build --platform android --profile preview --clear-cache
-📱 Probar en iOS (iPhone)
+ Probar en iOS (iPhone)
 Debido a las políticas de firmado de Apple, existen dos formas de probar la aplicación en iOS:
 
 Vía Expo Go (Gratuito): Correr npx expo start y escanear el QR desde la app de cámara.
